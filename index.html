@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>당신이 대답할 질문은···?</title>
+<style>
+  :root {
+    --bg: #F0EDE8;
+    --bg-subtle: #E4DFD8;
+    --text: #1A1A1A;
+    --text-muted: #6B6560;
+    --gold: #D4A843;
+    --gold-glow: rgba(212, 168, 67, 0.3);
+    --gold-soft: #F5E6B8;
+    --coral: #E85D4A;
+    --card-bg: #FFFFFF;
+    --card-border: rgba(0,0,0,0.06);
+    --num-available: #FFFFFF;
+    --num-available-border: rgba(0,0,0,0.1);
+    --num-drawn: #E4DFD8;
+    --num-drawn-text: #B0AAA4;
+    --stage-bg: linear-gradient(145deg, #1A1A1A, #0B1628);
+    --stage-text: #F0EDE8;
+    --history-bg: rgba(0,0,0,0.03);
+    --info-bg: #FFFFFF;
+    --info-border: rgba(0,0,0,0.08);
+    --info-heading: #D4A843;
+    --question-text: #F0EDE8;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0B1628;
+      --bg-subtle: #122035;
+      --text: #E8E4DF;
+      --text-muted: #7A8594;
+      --gold: #E0B44E;
+      --gold-glow: rgba(224, 180, 78, 0.25);
+      --gold-soft: #3D3220;
+      --coral: #F06B58;
+      --card-bg: #152238;
+      --card-border: rgba(255,255,255,0.06);
+      --num-available: #1A2D48;
+      --num-available-border: rgba(255,255,255,0.1);
+      --num-drawn: #0E1A2C;
+      --num-drawn-text: #3A4A5C;
+      --stage-bg: linear-gradient(145deg, #0A1220, #060D18);
+      --stage-text: #E8E4DF;
+      --history-bg: rgba(255,255,255,0.03);
+      --info-bg: #152238;
+      --info-border: rgba(255,255,255,0.06);
+      --info-heading: #E0B44E;
+      --question-text: #E8E4DF;
+    }
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: system-ui, -apple-system, 'Malgun Gothic', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem 1rem 3rem;
+  }
+
+  /* --- Info accordion --- */
+  .info-section {
+    width: 100%;
+    max-width: 480px;
+    margin-bottom: 1.5rem;
+  }
+  .info-toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.8rem 1rem;
+    background: var(--info-bg);
+    border: 1px solid var(--info-border);
+    border-radius: 0.6rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text);
+    transition: border-radius 0.2s;
+  }
+  .info-toggle .arrow {
+    transition: transform 0.25s;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+  }
+  .info-section.open .info-toggle {
+    border-radius: 0.6rem 0.6rem 0 0;
+  }
+  .info-section.open .arrow {
+    transform: rotate(180deg);
+  }
+  .info-body {
+    display: none;
+    background: var(--info-bg);
+    border: 1px solid var(--info-border);
+    border-top: none;
+    border-radius: 0 0 0.6rem 0.6rem;
+    padding: 1rem 1.2rem 1.2rem;
+  }
+  .info-section.open .info-body {
+    display: block;
+  }
+  .info-body h3 {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--info-heading);
+    letter-spacing: 0.04em;
+    margin-bottom: 0.5rem;
+    margin-top: 1rem;
+  }
+  .info-body h3:first-child {
+    margin-top: 0;
+  }
+  .info-body ol, .info-body ul {
+    padding-left: 1.2rem;
+    margin-bottom: 0.2rem;
+  }
+  .info-body li {
+    font-size: 0.78rem;
+    line-height: 1.65;
+    color: var(--text);
+    margin-bottom: 0.15rem;
+  }
+
+  /* --- Header --- */
+  .header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+  .header h1 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--text);
+    line-height: 1.4;
+  }
+  .header .subtitle {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+    letter-spacing: 0.02em;
+  }
+
+  /* --- Stage --- */
+  .stage {
+    background: var(--stage-bg);
+    border-radius: 1rem;
+    width: 100%;
+    max-width: 480px;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    padding: 1.5rem 1.5rem 2.5rem;
+    gap: 0.8rem;
+  }
+  .stage-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--gold);
+    opacity: 0.7;
+    position: absolute;
+    top: 1rem;
+  }
+  .stage-number {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: var(--stage-text);
+    line-height: 1;
+    user-select: none;
+    margin-top: 1.2rem;
+  }
+  .stage-number.spinning {
+    animation: spin 0.08s steps(1) infinite;
+  }
+  .stage-number.revealed {
+    color: var(--gold);
+    text-shadow: 0 0 30px var(--gold-glow), 0 0 60px var(--gold-glow);
+    animation: revealPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+  .stage-number.idle {
+    color: rgba(255,255,255,0.12);
+    font-size: 3rem;
+  }
+  .stage-question {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--question-text);
+    text-align: center;
+    max-width: 380px;
+    word-break: keep-all;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .stage-question.show {
+    opacity: 1;
+    animation: fadeUp 0.5s ease-out forwards;
+  }
+  .stage-count {
+    position: absolute;
+    bottom: 0.8rem;
+    font-size: 0.68rem;
+    color: rgba(255,255,255,0.35);
+    letter-spacing: 0.03em;
+  }
+
+  @keyframes spin {
+    0% { opacity: 1; }
+    50% { opacity: 0.6; }
+    100% { opacity: 1; }
+  }
+  @keyframes revealPop {
+    0% { transform: scale(0.5); opacity: 0; }
+    60% { transform: scale(1.08); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* --- Controls --- */
+  .controls {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    width: 100%;
+    max-width: 480px;
+  }
+  .btn-draw {
+    flex: 1;
+    padding: 0.9rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    border: none;
+    border-radius: 0.6rem;
+    cursor: pointer;
+    background: var(--gold);
+    color: #0B1628;
+    transition: transform 0.12s, box-shadow 0.12s;
+    box-shadow: 0 2px 12px var(--gold-glow);
+  }
+  .btn-draw:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px var(--gold-glow);
+  }
+  .btn-draw:active:not(:disabled) {
+    transform: translateY(0);
+  }
+  .btn-draw:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .btn-reset {
+    padding: 0.9rem 1.2rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border: 1.5px solid var(--coral);
+    border-radius: 0.6rem;
+    cursor: pointer;
+    background: transparent;
+    color: var(--coral);
+    transition: background 0.15s, color 0.15s;
+    white-space: nowrap;
+  }
+  .btn-reset:hover {
+    background: var(--coral);
+    color: #fff;
+  }
+
+  /* --- Grid --- */
+  .section-title {
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 0.7rem;
+    width: 100%;
+    max-width: 480px;
+    text-align: left;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 6px;
+    width: 100%;
+    max-width: 480px;
+    margin-bottom: 2rem;
+  }
+  .grid-cell {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.4rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    background: var(--num-available);
+    border: 1px solid var(--num-available-border);
+    color: var(--text);
+    transition: all 0.25s;
+    user-select: none;
+  }
+  .grid-cell.drawn {
+    background: var(--num-drawn);
+    color: var(--num-drawn-text);
+    border-color: transparent;
+    text-decoration: line-through;
+    text-decoration-color: var(--num-drawn-text);
+  }
+  .grid-cell.just-drawn {
+    background: var(--gold);
+    color: #0B1628;
+    border-color: var(--gold);
+    animation: cellFlash 1.5s ease-out forwards;
+    text-decoration: none;
+  }
+  @keyframes cellFlash {
+    0% { background: var(--gold); color: #0B1628; border-color: var(--gold); }
+    100% { background: var(--num-drawn); color: var(--num-drawn-text); border-color: transparent; }
+  }
+
+  /* --- History --- */
+  .history {
+    width: 100%;
+    max-width: 480px;
+  }
+  .history-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding: 1rem;
+    background: var(--history-bg);
+    border-radius: 0.6rem;
+    min-height: 3rem;
+    align-items: center;
+  }
+  .history-list:empty::after {
+    content: '아직 추첨된 숫자가 없습니다';
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-style: italic;
+  }
+  .history-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    height: 1.6rem;
+    padding: 0 0.5rem;
+    border-radius: 2rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    background: var(--gold-soft);
+    color: var(--gold);
+    animation: chipIn 0.3s ease-out;
+  }
+  .history-chip .order {
+    font-size: 0.6rem;
+    font-weight: 400;
+    opacity: 0.6;
+    margin-right: 0.25rem;
+  }
+  @keyframes chipIn {
+    from { transform: scale(0); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  /* --- Modal --- */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--card-bg);
+    border-radius: 0.8rem;
+    padding: 1.8rem 2rem;
+    max-width: 320px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+  }
+  .modal p {
+    font-size: 0.95rem;
+    margin-bottom: 1.4rem;
+    line-height: 1.5;
+    color: var(--text);
+  }
+  .modal-actions { display: flex; gap: 0.6rem; }
+  .modal-actions button {
+    flex: 1;
+    padding: 0.65rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.15s;
+  }
+  .modal-actions button:hover { opacity: 0.85; }
+  .modal-cancel { background: var(--bg-subtle); color: var(--text-muted); }
+  .modal-confirm { background: var(--coral); color: #fff; }
+
+  /* --- Done banner --- */
+  .done-banner {
+    display: none;
+    text-align: center;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 0.6rem;
+    background: var(--gold-soft);
+    color: var(--gold);
+    font-weight: 600;
+    font-size: 0.9rem;
+    width: 100%;
+    max-width: 480px;
+  }
+  .done-banner.show {
+    display: block;
+    animation: chipIn 0.4s ease-out;
+  }
+
+  @media (max-width: 500px) {
+    .grid { grid-template-columns: repeat(8, 1fr); gap: 4px; }
+    .grid-cell { font-size: 0.75rem; border-radius: 0.3rem; }
+    .stage-number { font-size: 2.8rem; }
+    .stage-number.idle { font-size: 2.4rem; }
+    .stage-question { font-size: 0.9rem; }
+    body { padding: 1rem 0.7rem 2rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .stage-number.spinning { animation: none; }
+    .stage-number.revealed { animation: none; }
+    .stage-question.show { animation: none; }
+    .grid-cell.just-drawn { animation: none; }
+    .history-chip { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Info accordion -->
+<div class="info-section" id="infoSection">
+  <button class="info-toggle" onclick="toggleInfo()">
+    <span>■ 진행 방법 &amp; 주의사항</span>
+    <span class="arrow">▼</span>
+  </button>
+  <div class="info-body">
+    <h3>■ 진행 방법</h3>
+    <ol>
+      <li>팀별로 식사를 하며 진행합니다.</li>
+      <li>하나의 기기로 진행하며 순서를 정하여 번갈아가며 번호를 추첨합니다.</li>
+      <li>제시된 질문을 수행합니다(사진 촬영 등의 행동 미션의 경우, 모든 활동이 끝난 후 세계로교회 청년부 공식 카카오톡에 메세지로 전송해주세요.)</li>
+      <li>미션의 경우, 예배 관련 미션을 제외한 기타 미션에서 가장 많이 이름이 언급된 사람에게는 소정의 상품을 지급합니다.</li>
+      <li>미션 수행 후, 쪽지에 대상자 이름을 적고 반납합니다.</li>
+    </ol>
+    <h3>■ 주의사항</h3>
+    <ol>
+      <li>미션은 식사 시간부터 예배 시작 전까지 진행할 수 있습니다.</li>
+      <li>같은 사람이 연속으로 번호를 추첨하면 안됩니다.</li>
+      <li>질문 속 미션은 반드시 같은 팀원과 수행할 필요가 없습니다. 오히려 다른 팀원도 포함하여 진행하는 것을 적극 권장합니다.</li>
+      <li>식사와 다른 사람의 대화를 방해하지 않는 선에서 자유롭게 이동할 수 있습니다.</li>
+      <li>답변하기 어려운 질문은 1회에 한해 패스 가능합니다.</li>
+    </ol>
+  </div>
+</div>
+
+<!-- Header -->
+<div class="header">
+  <h1>당신이 대답할 질문은···? ✌︎ ʘ̅͜ʘ̅</h1>
+  <p class="subtitle">1 ~ 40 중 하나를 추첨하면 질문이 공개됩니다</p>
+</div>
+
+<!-- Stage -->
+<div class="stage">
+  <span class="stage-label">추첨 결과</span>
+  <div class="stage-number idle" id="stageNumber">?</div>
+  <div class="stage-question" id="stageQuestion"></div>
+  <span class="stage-count" id="stageCount">남은 번호: 40 / 40</span>
+</div>
+
+<div class="done-banner" id="doneBanner">모든 질문이 추첨되었습니다!</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <p>모든 추첨 기록을 초기화할까요?</p>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeModal()">취소</button>
+      <button class="modal-confirm" onclick="confirmReset()">초기화</button>
+    </div>
+  </div>
+</div>
+
+<!-- Controls -->
+<div class="controls">
+  <button class="btn-draw" id="btnDraw" onclick="draw()">추첨하기</button>
+  <button class="btn-reset" onclick="resetAll()">초기화</button>
+</div>
+
+<p class="section-title">번호판</p>
+<div class="grid" id="grid"></div>
+
+<div class="history">
+  <p class="section-title">추첨 순서</p>
+  <div class="history-list" id="historyList"></div>
+</div>
+
+<script>
+  const TOTAL = 40;
+  const QUESTIONS = {
+    1: '내가 생각하는 우리 교회의 특이한 점은?',
+    2: '나에게 신앙이란 ________다.',
+    3: '하나님이 나에게 카톡을 딱 한 줄 보내신다면 어떤 내용일 것 같나요?',
+    4: '성경 속 인물들과 단체채팅방을 만든다면 가장 시끄러울 사람은?',
+    5: '천국에 카페가 있다면 누구와 커피를 마시고 싶나요?',
+    6: '지금 내 신앙 상태를 날씨로 표현한다면?',
+    7: '교회를 음식으로 표현한다면?',
+    8: '직장 상사(또는 교수님, 선배 등)를 성경 속 요소(인물, 생물 등)로 비교해본다면 무엇인가?',
+    9: '지금 가장 감사한 일 한 가지는?',
+    10: '인터뷰 해보고 싶은 성경 인물은?',
+    11: '내 인생을 소설 제목으로 만든다면?',
+    12: '1년 동안 1가지만 평생 무료라면 배달의 민족 vs 카카오T',
+    13: '갑자기 1억 원이 생긴다면 가장 먼저 할 일은?',
+    14: '하루 동안 동물로 변한다면 무엇이 되고 싶고 어떤 것을 할 것인지?',
+    15: '하루동안 지내야 한다면? 맞은 편에 앉은 사람의 5살 시절 1명 vs 현재 나이로 5명',
+    16: '여름에 몸에 핫팩 붙이기 vs 겨울에 몸에 아이스팩 붙이기',
+    17: '아이스크림 위에 탕수육 소스 vs 탕수육 위에 아이스크림',
+    18: '다시 태어난다면 꼭 해보고 싶은 직업은?',
+    19: '친구들이 나를 물건으로 표현한다면?',
+    20: '내가 가진 의외의 재능 또는 특기는?',
+    21: '오늘 예배 때 조금 더 집중적으로 기도해주고 싶은 사람에게서 기도제목을 받아보세요.',
+    22: '같이 예배드리고 싶은 사람에게 전해주세요.',
+    23: '주변에서 고양이, 강아지, 양, 쿼카 중 하나를 닮은 사람을 찾으세요.',
+    24: '똑같은 MBTI를 가진 사람을 찾으세요.',
+    25: '오늘 처음 만난 사람과 공통점 2개를 찾으세요.',
+    26: '다른 팀 사람과 함께 사진을 찍으세요.',
+    27: '새가족 한 명과 1분 이상 대화하세요.',
+    28: '오늘 가장 밝게 웃는 사람을 찾으세요.',
+    29: '본인과 가장 성격이 정반대인 사람을 찾으세요.',
+    30: '최근 가장 웃겼던 일을 들려준 사람을 찾으세요.',
+    31: '취미가 같은 사람을 찾으세요.',
+    32: '어린 시절 꿈이 가장 특이한 사람을 찾으세요.',
+    33: '이름에 같은 글자가 들어가는 사람을 찾으세요.',
+    34: '생일 월이 같은 사람을 찾으세요.',
+    35: '오늘 가장 먼 곳에서 온 사람을 찾으세요.',
+    36: '서로의 첫인상을 이야기해보세요.',
+    37: '버킷리스트가 같은 사람을 찾으세요.',
+    38: '오늘 처음 만난 사람 3명의 이름을 외우세요.',
+    39: '다른 팀 사람과 서로 칭찬 한 가지씩 해주세요.',
+    40: '함께 손하트를 만들어 사진을 찍으세요.'
+  };
+
+  let available = [];
+  let drawn = [];
+
+  function init() {
+    available = Array.from({ length: TOTAL }, (_, i) => i + 1);
+    drawn = [];
+    buildGrid();
+    updateStage();
+    document.getElementById('historyList').innerHTML = '';
+    document.getElementById('doneBanner').classList.remove('show');
+    document.getElementById('btnDraw').disabled = false;
+    document.getElementById('stageQuestion').textContent = '';
+    document.getElementById('stageQuestion').classList.remove('show');
+  }
+
+  function buildGrid() {
+    const grid = document.getElementById('grid');
+    grid.innerHTML = '';
+    for (let i = 1; i <= TOTAL; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'grid-cell';
+      cell.id = 'cell-' + i;
+      cell.textContent = i;
+      grid.appendChild(cell);
+    }
+  }
+
+  function updateStage() {
+    const remaining = TOTAL - drawn.length;
+    document.getElementById('stageCount').textContent =
+      '남은 번호: ' + remaining + ' / ' + TOTAL;
+  }
+
+  function draw() {
+    if (available.length === 0) return;
+
+    const btn = document.getElementById('btnDraw');
+    const numEl = document.getElementById('stageNumber');
+    const qEl = document.getElementById('stageQuestion');
+    btn.disabled = true;
+
+    qEl.classList.remove('show');
+    qEl.textContent = '';
+    numEl.className = 'stage-number spinning';
+
+    let spinCount = 0;
+    const spinTotal = 15;
+    const spinInterval = setInterval(() => {
+      numEl.textContent = Math.floor(Math.random() * TOTAL) + 1;
+      spinCount++;
+      if (spinCount >= spinTotal) {
+        clearInterval(spinInterval);
+        revealNumber(numEl, btn);
+      }
+    }, 60);
+  }
+
+  function revealNumber(numEl, btn) {
+    const idx = Math.floor(Math.random() * available.length);
+    const num = available.splice(idx, 1)[0];
+    drawn.push(num);
+
+    numEl.textContent = num;
+    numEl.className = 'stage-number revealed';
+
+    const qEl = document.getElementById('stageQuestion');
+    setTimeout(() => {
+      qEl.textContent = QUESTIONS[num];
+      qEl.classList.add('show');
+    }, 350);
+
+    const cell = document.getElementById('cell-' + num);
+    cell.className = 'grid-cell just-drawn';
+    setTimeout(() => { cell.classList.add('drawn'); }, 1500);
+
+    const chip = document.createElement('span');
+    chip.className = 'history-chip';
+    chip.innerHTML = '<span class="order">' + drawn.length + '.</span>' + num;
+    document.getElementById('historyList').appendChild(chip);
+
+    updateStage();
+
+    if (available.length === 0) {
+      document.getElementById('doneBanner').classList.add('show');
+    } else {
+      btn.disabled = false;
+    }
+  }
+
+  function resetAll() {
+    if (drawn.length === 0) return;
+    document.getElementById('modalOverlay').classList.add('show');
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('show');
+  }
+
+  function confirmReset() {
+    closeModal();
+    const numEl = document.getElementById('stageNumber');
+    numEl.className = 'stage-number idle';
+    numEl.textContent = '?';
+    init();
+  }
+
+  function toggleInfo() {
+    document.getElementById('infoSection').classList.toggle('open');
+  }
+
+  init();
+</script>
+
+</body>
+</html>
