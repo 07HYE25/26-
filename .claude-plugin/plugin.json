@@ -1,0 +1,13 @@
+{
+  "name": "design-kit",
+  "description": "Design, readability and harmony skills for homepage UI/UX work",
+  "version": "1.0.0",
+  "author": { "name": "07HYE25" },
+  "skills": "./.claude/skills/",
+  "agents": [
+    "./.claude/agents/impeccable-asset-producer.md",
+    "./.claude/agents/impeccable-documenter.md",
+    "./.claude/agents/impeccable-finish-reviewer.md",
+    "./.claude/agents/impeccable-manual-edit-applier.md"
+  ]
+}
