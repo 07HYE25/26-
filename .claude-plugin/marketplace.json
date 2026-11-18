@@ -1,0 +1,12 @@
+{
+  "name": "hye-design-kit",
+  "description": "Personal design skill kit: impeccable, taste-skill, unslop, emilkowalski skills, design-md, web-design-engineer, OPTIK picks",
+  "owner": { "name": "07HYE25" },
+  "plugins": [
+    {
+      "name": "design-kit",
+      "description": "Design, readability and harmony skills for homepage UI/UX work",
+      "source": "./"
+    }
+  ]
+}
